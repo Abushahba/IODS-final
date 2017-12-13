@@ -1,0 +1,16 @@
+---
+title: "Index"
+author: "Abushahba"
+output:
+  html_document:
+    theme: united
+    highlight: tango 
+    toc: true
+    toc_depth: 2
+    fig_caption: true
+    fig_width: 8
+    fig_height: 7
+    code_folding: hide
+---
+
+This is initial temporary text to start up.
