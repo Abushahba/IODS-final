@@ -1,5 +1,5 @@
 ---
-title: "Index"
+title: "IODS-Final assignment"
 author: "Abushahba"
 output:
   html_document:
@@ -13,4 +13,12 @@ output:
     code_folding: hide
 ---
 
-This is initial temporary text to start up.
+***
+  
+```{r child = "IODS_final1.Rmd"}
+```
+  
+
+
+
+
