@@ -1,6 +1,9 @@
 ---
 title: "IODS-Final assignment"
-author: "Abushahba"
+author:
+- name: "Ahmed Gamal Abushahba"  
+  affiliation: "ahmed.abushahba@helsinki.fi"
+date: "12.12.2017"
 output:
   html_document:
     theme: united

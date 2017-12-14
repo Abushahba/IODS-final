@@ -60,12 +60,8 @@ str(human$GNI)
 # removing commas from GNI and make it numeric
 
 library(stringr)
+human<-mutate (human, GNI=str_replace(human$GNI, pattern=",", replace ="") %>% as.numeric())
 
-str_replace(human$GNI, pattern=",", replace ="")
-
-human$GNI <- as.factor(human$GNI)
-
-human$GNI = as.numeric(human$GNI)
 is.numeric(human$GNI)
 
 # Exclude unneeded variables: keep only the columns matching the following

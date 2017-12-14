@@ -1,0 +1,88 @@
+---
+title: "About IODS final assignment"
+author: "Abushahba"
+date: "December 13, 2017"
+output: html_document
+---
+
+# **Insights on human data set**
+
+## *Introduction*
+
+This part of my final assignment will focus on analysing a data set named *humanW*, it originates from the United Nations Development Programme. See [their data page](http://hdr.undp.org/en/content/human-development-index-hdi) for more information. For a nice overview see also [the calculating the human development indices pdf](http://hdr.undp.org/sites/default/files/hdr2015_technical_notes.pdf). Most of the variable names in the data have been shortened and two new variables have been computed. See the [meta file](https://raw.githubusercontent.com/TuomoNieminen/Helsinki-Open-Data-Science/master/datasets/human_meta.txt). For the modified data please check our renamed variables and [wrangled raw data](https://github.com/Abushahba/IODS-final/blob/master/data/humanW.csv), as well as [R script for data wrangling](https://github.com/Abushahba/IODS-final/blob/master/data/create_human.R).
+
+Briefly, the data combines several indicators from most countries in the world that can be broadly classified into those related to **Health and knowledge** and others related to **Empowerment**.
+
+## *Characteristics of the dataset*
+
+First, we will read our working dataset, inspect its structure and dimensions.
+
+```{r}
+#read saved modified dataset into an object
+humanW <- read.csv(file = "C:/Users/ahmed/Desktop/IODS-final-master/IODS-final/data/humanW.csv", row.names=1, header=TRUE)
+
+#exploring structure and dimensions of dataset
+str(humanW)
+
+dim(humanW)
+```
+
+### Discriptive statistics summaries
+
+Basic summaries of the data variables
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(knitr)
+library(kableExtra)
+```
+
+
+```{r}
+Label<-c("Edu2.FM" ,     "Labo.FM",       "Edu.Exp"    ,   "Life.Exp",
+ "GNI"     ,      "Mat.Mor"  ,    "Ado.Birth", "Parli.F"  )
+
+Variable<-c("Population with at least some secondary education (female/male ratio)",
+ "Labour force participation rate (female/male ratio)",
+"Expected years of schooling",
+"Life expectancy at birth",
+"Gross national income (GNI) per capita",
+"Maternal mortality ratio(deaths per 100 000 live births)",
+"Adolescent birth rate (births per 1 000 women ages 15-19)",
+"Share of seats in parliament (female)")
+
+om<- data.frame(Label,Variable)
+
+kable(om, "html") %>%
+  kable_styling(bootstrap_options = "bordered", full_width = TRUE)
+```
+
+
+```{r}
+summary(humanW)
+```
+
+More summary statistics and boxplots 
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(settings)
+library(tableone)
+```
+
+
+```{r}
+reset(options)
+options("scipen"=10, "digits"=2)
+tab1<-CreateTableOne(vars=c( "Edu2.FM" ,"Labo.FM" ,  "Edu.Exp"   ,   
+"Life.Exp" ,     "GNI"  ,         "Mat.Mor"  ,    "Ado.Birth",
+"Parli.F") ,data=humanW)
+summary(tab1)
+
+```
+
+
+
+
+
+
+
+
