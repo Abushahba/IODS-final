@@ -5,7 +5,7 @@ date: "December 13, 2017"
 output: html_document
 ---
 
-# **Insights on human data set**
+# **Insights on human dataset**
 
 ## *Introduction*
 
@@ -78,6 +78,94 @@ tab1<-CreateTableOne(vars=c( "Edu2.FM" ,"Labo.FM" ,  "Edu.Exp"   ,
 summary(tab1)
 
 ```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+reset(options)
+
+```
+
+```{r}
+par(mfrow=c(2,4))
+
+p1<-boxplot(humanW$Edu2.FM,col="lightgreen",main="F/M ratio of educational level",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p2<-boxplot(humanW$Labo.FM,col="brown",main="F/M ratio labour force",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p3<-boxplot(humanW$Edu.Exp,col="lightblue",main="Expected years of schooling",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p4<-boxplot(humanW$Life.Exp,col="green",main="Life expectancy",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p5<-boxplot(humanW$GNI,col="orange",main="National income percap",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p6<-boxplot(humanW$Mat.Mor,col="grey",main="Maternal mortality (per 100000)",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p7<-boxplot(humanW$Ado.Birth,col="purple",main="Adolescent birth rate",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p8<-boxplot(humanW$Parli.F,col="yellow",main="Share of female seats in parliament",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+```
+
+If we now try to have a look on African countries
+```{r}
+# Africa comprises all african counties from 
+# https://www.countries-ofthe-world.com/countries-of-africa.html
+
+Africa <- c("Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic (CAR)", "Chad", "Comoros", "Democratic Republic of the Congo", "Republic of the Congo", "Cote d'Ivoire", "Djibouti", "Egypt", "Equatorial Guinea", "Eritrea", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Swaziland", "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe")
+
+# intersect Africa with row names return existing African countries
+
+human_Africa <- humanW[intersect(Africa, row.names(humanW)),]
+
+```
+
+
+```{r}
+reset(options)
+options("scipen"=10, "digits"=2)
+tab1<-CreateTableOne(vars=c( "Edu2.FM" ,"Labo.FM" ,  "Edu.Exp"   ,   
+"Life.Exp" ,     "GNI"  ,         "Mat.Mor"  ,    "Ado.Birth",
+"Parli.F") ,data=human_Africa)
+summary(tab1)
+
+```
+
+
+
+
+```{r}
+par(mfrow=c(2,4))
+
+p1<-boxplot(human_Africa$Edu2.FM,col="lightgreen",main="F/M ratio of educational level",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p2<-boxplot(human_Africa$Labo.FM,col="brown",main="F/M ratio labour force",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p3<-boxplot(human_Africa$Edu.Exp,col="lightblue",main="Expected years of schooling",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p4<-boxplot(human_Africa$Life.Exp,col="green",main="Life expectancy",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p5<-boxplot(human_Africa$GNI,col="orange",main="National income percap",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p6<-boxplot(human_Africa$Mat.Mor,col="grey",main="Maternal mortality (per 100000)",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p7<-boxplot(human_Africa$Ado.Birth,col="purple",main="Adolescent birth rate",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+p8<-boxplot(human_Africa$Parli.F,col="yellow",main="Share of female seats in parliament",cex.main=0.9, cex=1, pch=1, pt.cex =1)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
