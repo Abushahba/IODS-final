@@ -532,7 +532,7 @@ cvbetter$delta[1]
 
 ## *Conclusion*
 
-the inclusion of the variable Edu.Exp dramatically improved the model and decreased the percentage of misclassified observations to 14%, I am not surprised as this goes in accordance with our initial linear regression results discussed earlier.
+the inclusion of the variable Edu.Exp dramatically improved the model and decreased the percentage of misclassified observations significantly, I am not surprised as this goes in accordance with our initial linear regression results discussed earlier.
 
 ***************
 

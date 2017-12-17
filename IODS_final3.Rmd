@@ -1,0 +1,143 @@
+---
+title: "Appendix"
+author: "Abushahba"
+date: "December 17, 2017"
+output: html_document
+---
+
+# Appendix
+
+## *Linear Discrimination Analysis for Non-African countries*
+
+We will work on *Non-African countries* data as seen next:
+
+```{r}
+
+human_nonAfricaLDA <- humanW_NonAf
+
+summary(human_nonAfricaLDA)
+
+```
+
+## *Scaling the dataset and categorising GNI*
+
+Linear discriminant analysis is a method generating linear combinations to charachterize variable classes. To enable the method the data set should be fine-tuned by scaling the mean of every variable to zero by ubtracting the column means from the corresponding columns and dividing the difference with standard deviation.
+
+```{r}
+#scale the dataset
+Non_African_scaled <- as.data.frame(scale(human_nonAfricaLDA))
+
+summary(Non_African_scaled)
+
+```
+
+as compared with initial summary, after scaling all means adjusted to zero, what we do next is to create GNI categorial variable of scaled data, Quantiles are used for this to yield four grouping values: low, medium low, medium high and high GNI per capita and thus four groups with approximatey equal numbers of observations each, then, the data set is randomly spit for the analysis to train (80%) and test (20%) sets.
+
+```{r}
+# create a quantile vector of GNI, and use it to categorize GNI
+bins2 <- quantile(Non_African_scaled$GNI)
+GNIq2 <- cut(Non_African_scaled$GNI, breaks = bins2, include.lowest = TRUE, label = c('low','med_low','med_high','high'))
+# replace the original unscaled variable.
+Non_African_scaled <- dplyr::select(Non_African_scaled, -GNI)
+Non_African_scaled <- data.frame(Non_African_scaled, GNIq2)
+# explore the categorised variable.
+summary(Non_African_scaled)
+
+```
+
+as intended; now we have low, medium low, medium high and high GNI per capita in four groups with approximatey equal numbers of observations each.
+
+Now, we need to divide the dataset to train and test sets, so that 80% of the data belongs to the train set.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+set.seed(123)
+n2 <- nrow(Non_African_scaled)
+n2
+```
+
+
+```{r}
+# choose randomly 80% of the rows
+train_set2 <- sample(n2,  size = n2 * 0.8)
+
+train2 <- Non_African_scaled[train_set2,]
+ 
+test2 <- Non_African_scaled[-train_set2,]
+
+correct_classes2 <- test2$GNIq2
+
+```
+
+Now, let's fit the linear discriminant analysis on the train set. Use the categorical GNIq2 as the target variable and all the other variables in the dataset as predictor variables.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(MASS)
+```
+
+
+```{r}
+lda.fit_nonAf <- lda(GNIq2 ~ ., data = train2)
+
+lda.fit_nonAf
+```
+
+Based on that we can say that percentage separations achieved by the first and second discriminant functions is about 99% which is quite fine. 
+
+## *LDA (bi)plots*
+
+```{r}
+# the function for lda biplot arrows
+lda.arrows4 <- function(x, myscale = 2, arrow_heads = 0.2, color = "deeppink", tex = 1, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# classes as numeric
+classes <- as.numeric(train2$GNIq2)
+
+# plot results
+
+p13 <- plot(lda.fit_nonAf, dimen = 2, col = classes, pch = classes)
+
+```
+
+```{r}
+#(bi)plot
+p14 <- plot(lda.fit_nonAf, dimen = 2, col = classes, pch = classes)
+#arrows 
+lda.arrows(lda.fit_nonAf) 
+```
+
+```{r}
+print(lda.fit_nonAf) 
+
+```
+
+We notice here that life.Exp, Edu.Exp, Mat.Mor and (negatively) Ado.Birth are the major discriminants for about 86% of variations in observations in non-African countries.
+
+## *Prediction*
+
+Let's test the accuracy of predictions based on our model.
+
+```{r}
+lda.pred_nonAfr <- predict(lda.fit_nonAf, newdata = test2)
+table(correct = correct_classes2, predicted = lda.pred_nonAfr$class) %>% addmargins()
+```
+
+## *Conclusion*
+
+This model prediction is good for *low* and *high* GNI categories based on the variables of life.Exp, Edu.Exp, Mat.Mor and (negatively) Ado.Birth as the major discriminants, however, for med_low and med_high it's not as accurate.
+
+
+*********************
+
+# Summary
+
+There is clear difference in the correlation and impact of variables between African countries and non-African countries. Such difference should be assessed as well among different continents, and it throughs the light on different cultural and social factors that confounds with observations and that should be approached with care before drawing any generalized conclusions based on heterogenous backgrounds. Taking into consideration those differences yet increases our understanding of human behavior in communities around the world; allowing us improve and enhance human development. 
+
+*******************
+*******************

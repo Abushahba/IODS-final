@@ -1,0 +1,324 @@
+---
+title: "LDA analysis"
+author: "Abushahba"
+date: "December 17, 2017"
+output: html_document
+---
+
+# Linear discriminant analysis
+
+## *Introduction*
+
+Linear discriminant analysis (LDA) is a generalization of Fisher's linear discriminant, a method used in statistics, pattern recognition and machine learning to find a linear combination of features that characterizes or separates two or more classes of objects or events. The resulting combination may be used as a linear classifier, or, more commonly, for dimensionality reduction before later classification.
+
+Here, we will continue analysind data concerning African countries with regard to their *GNI*.
+
+## *African countries data revisited*
+
+We will work on *African countries* data as seen next:
+
+```{r}
+
+human_AfricaLDA <- dplyr::select(human_Africa, -GNIcat)
+
+glimpse(human_AfricaLDA)
+
+summary(human_AfricaLDA)
+
+```
+
+## *Scaling the dataset and categorising GNI*
+
+Linear discriminant analysis is a method generating linear combinations to charachterize variable classes. To enable the method the data set should be fine-tuned by scaling the mean of every variable to zero by ubtracting the column means from the corresponding columns and dividing the difference with standard deviation.
+
+```{r}
+#scale the dataset
+African_scaled <- as.data.frame(scale(human_AfricaLDA))
+
+summary(African_scaled)
+
+```
+
+as compared with initial summary, after scaling all means adjusted to zero, what we do next is to create GNI categorial variable of scaled data, Quantiles are used for this to yield four grouping values: low, medium low, medium high and high GNI per capita and thus four groups with approximatey equal numbers of observations each, then, the data set is randomly spit for the analysis to train (80%) and test (20%) sets.
+
+```{r}
+# create a quantile vector of GNI, and use it to categorize GNI
+bins <- quantile(African_scaled$GNI)
+GNIq <- cut(African_scaled$GNI, breaks = bins, include.lowest = TRUE, label = c('low','med_low','med_high','high'))
+# replace the original unscaled variable.
+African_scaled <- dplyr::select(African_scaled, -GNI)
+African_scaled <- data.frame(African_scaled, GNIq)
+# explore the categorised variable.
+summary(African_scaled)
+
+```
+
+as intended; now we have low, medium low, medium high and high GNI per capita in four groups with approximatey equal numbers of observations each.
+
+Now, we need to divide the dataset to train and test sets, so that 80% of the data belongs to the train set.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+set.seed(123)
+n <- nrow(African_scaled)
+n
+```
+
+```{r}
+# choose randomly 80% of the rows
+train_set <- sample(n,  size = n * 0.8)
+
+train <- African_scaled[train_set,]
+ 
+test <- African_scaled[-train_set,]
+
+correct_classes <- test$GNIq
+
+```
+
+Now, let's fit the linear discriminant analysis on the train set. Use the categorical GNIq as the target variable and all the other variables in the dataset as predictor variables.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(MASS)
+```
+
+
+```{r}
+lda.fit <- lda(GNIq ~ ., data = train)
+
+lda.fit
+```
+
+Based on that we can say that percentage separations achieved by the first and second discriminant functions is about 99% which is quite fine. 
+
+## *LDA (bi)plots*
+
+```{r}
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 0.8, arrow_heads = 0.08, color = "deeppink", tex = 0.95, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# classes as numeric
+classes <- as.numeric(train$GNIq)
+
+# plot results
+
+p9 <- plot(lda.fit, dimen = 2, col = classes, pch = classes)
+
+```
+
+```{r}
+#(bi)plot
+p10 <- plot(lda.fit, dimen = 2, col = classes, pch = classes)
+#arrows 
+lda.arrows(lda.fit, myscale = 0.7) 
+```
+
+```{r}
+print(lda.fit) 
+
+```
+
+
+Here we can see that the first two linear discriminants contribute to explain about 99% of variation in our observations and African countries are generally reasonably separated into *towards high GNI countries* with variables like *Edu.Exp* more than *Edu2.FM* contributing more to that direction and other *towards low GNI countries* with the *Labo.FM* variable contributing significantly to their classification.
+
+## *Prediction*
+
+Let's test the accuracy of predictions based on our model.
+
+```{r}
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = correct_classes, predicted = lda.pred$class) %>% addmargins()
+```
+
+We can capture from the crosstabulated predictions with correct that the model can effeciently classify countries into two broader classes of *(low and med_low)* and *(med_high and high)* regarding their GNI.
+
+## *Is there better model?*
+
+```{r}
+lda.fit2 <- lda(GNIq ~ Labo.FM+Edu.Exp+Edu2.FM, data = train)
+
+lda.fit2
+```
+
+LDA(bi)plots
+
+```{r}
+# the function for lda biplot arrows
+lda.arrows2 <- function(x, myscale = 0.8, arrow_heads = 0.08, color = "deeppink", tex = 0.95, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# classes as numeric
+classes <- as.numeric(train$GNIq)
+
+# plot results
+
+p11 <- plot(lda.fit2, dimen = 2, col = classes, pch = classes)
+
+```
+
+```{r}
+#(bi)plot
+p12 <- plot(lda.fit2, dimen = 2, col = classes, pch = classes)
+#arrows 
+lda.arrows2(lda.fit2, myscale = 0.7) 
+```
+
+```{r}
+print(lda.fit2) 
+
+```
+
+As expected in this final model it was found that the three basic variables that contribute to the explaining of almost 99% of the variation in GNI are in order of impact *Labo.FM* with negative direction, Edu.Exp followed by Edu2.FM in the positive direction. 
+
+## *Re-assessing prediction bt final model*
+
+```{r}
+lda.pred2 <- predict(lda.fit2, newdata = test)
+table(correct = correct_classes, predicted = lda.pred2$class) %>% addmargins()
+```
+Compared with previous predictions
+
+```{r}
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = correct_classes, predicted = lda.pred$class) %>% addmargins()
+```
+
+## *conclusion*
+
+Although expected to have better predictive power, the final model didn't add to the first model and still in both we can classify countries into two broader classes of *(low and med_low)* and *(med_high and high)* regarding their GNI.
+
+***********************
+
+# K-means
+
+## *Introduction*
+
+*k-means* clustering aims to partition n observations into k clusters in which each observation belongs to the cluster with the nearest mean, serving as a prototype of the cluster. This results in a partitioning of the data space into Voronoi cells.
+
+## *Eclidean and Manhattan distances*
+
+We will operate on African_scaled2 data and examine the distance properties of the data and compare methods in both the Euclidian (geometric) and Manhattan (along the axes) distance.
+
+```{r}
+African_scaled2 <- scale(human_AfricaLDA) %>% as.data.frame()
+class(African_scaled2)
+
+#Euclidean distance matrix
+dist_eu<-dist(African_scaled2)
+#for comparison Manhattan distance matrix
+dist_man<-dist(African_scaled2,method = "manhattan" )
+#summaries 
+summary(dist_eu)#Euclidian
+```
+
+```{r}
+summary(dist_man)#Manhattan
+```
+
+## *Preliminary K-means and determination of the optimal number of clusters*
+
+K-means algorith is exploratorily ran on the dataset using 5 clusters.
+
+```{r}
+#kmeans using euclidean and five clusters
+km <- kmeans(dist_eu, centers = 5)
+pairs(African_scaled2, col = km$cluster,lower.panel = NULL)
+```
+
+Now, let's assess what is the optimal number of clusters and run the algorithm again.
+
+
+```{r}
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(dist_eu, k)$tot.withinss})
+#Plot the results
+plot(1:k_max, twcss, type = 'b')
+```
+
+So, the plot shows that optimally we would have 2 clusters as the most prominent change in the sum of squares happens at 2.
+
+## *K-means using the optimal number of clusters*
+
+```{r}
+km <- kmeans(dist_eu, centers = 2)
+pairs(African_scaled2, col = km$cluster, lower.panel = NULL)
+```
+
+The scatter plot with only two clusters shows all data points are assigned to two red/black clusters. The clearer separation for the colours the more relevant for clustering the variable. GNI and Labo.FM seem to discriminate quite well between the two clusters.
+
+## *LDA fitting to K-means*
+
+This will be performed by K-means on the scaled data using 4 clusters. Therafter, LDA is fitted using the generated clusters as target classes.
+
+```{r}
+set.seed(123)
+
+African_scaled4 <- as.data.frame(scale(human_AfricaLDA,center=TRUE,scale = TRUE))
+dist_eu4 <- dist(African_scaled4)
+km2 <-kmeans(dist_eu4, centers = 4)
+
+```
+
+```{r}
+African_scaled4$classes<-km2$cluster
+lda.fit3 <- lda(African_scaled4$classes ~., data = African_scaled4)
+lda.arrows3 <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+plot(lda.fit3, dimen = 2, col= as.numeric(African_scaled4$classes), pch=classes)
+lda.arrows3(lda.fit3, myscale = 1)
+```
+
+Again, four clusters separated and we can taste the opposite dirction of GNI with Labo.FM in African countries. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

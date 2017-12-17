@@ -21,7 +21,16 @@ output:
 ```{r child = "IODS_final1.Rmd"}
 ```
   
+***
 
+```{r child = "IODS_final2.Rmd"}
+```
+  
+***
+
+```{r child = "IODS_final3.Rmd"}
+```
+    
 
 
 
