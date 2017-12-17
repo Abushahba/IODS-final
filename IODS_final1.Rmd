@@ -7,11 +7,17 @@ output: html_document
 
 # **Insights on human dataset**
 
+# Linear Regression Analysis
+
 ## *Introduction*
 
 This part of my final assignment will focus on analysing a data set named *humanW*, it originates from the United Nations Development Programme. See [their data page](http://hdr.undp.org/en/content/human-development-index-hdi) for more information. For a nice overview see also [the calculating the human development indices pdf](http://hdr.undp.org/sites/default/files/hdr2015_technical_notes.pdf). Most of the variable names in the data have been shortened and two new variables have been computed. See the [meta file](https://raw.githubusercontent.com/TuomoNieminen/Helsinki-Open-Data-Science/master/datasets/human_meta.txt). For the modified data please check our renamed variables and [wrangled raw data](https://github.com/Abushahba/IODS-final/blob/master/data/humanW.csv), as well as [R script for data wrangling](https://github.com/Abushahba/IODS-final/blob/master/data/create_human.R).
 
 Briefly, the data combines several indicators from most countries in the world that can be broadly classified into those related to **Health and knowledge** and others related to **Empowerment**.
+
+## *Research Question*
+
+Is the **Gross National Income per Capita (GNI)** as predicted with other development indices in *African nations* compared with *Non-African nations*? 
 
 ## *Characteristics of the dataset*
 
@@ -105,6 +111,7 @@ p8<-boxplot(humanW$Parli.F,col="yellow",main="Share of female seats in parliamen
 
 ```
 
+### Data about African countries
 If we now try to have a look on African countries
 ```{r}
 # Africa comprises all african counties from 
@@ -129,7 +136,10 @@ summary(tab1)
 
 ```
 
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+reset(options)
 
+```
 
 
 ```{r}
@@ -153,13 +163,378 @@ p8<-boxplot(human_Africa$Parli.F,col="yellow",main="Share of female seats in par
 
 ```
 
+### Plot matrices for both Whole world and African data
+
+Here we will add a variable of being African country or not
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(dplyr)
+
+```
+
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+# adding a new variable of being African or not
+# compare world countries with African
+row.names(humanW) %in% row.names(human_Africa)
+
+humanW_ <- mutate(humanW, Country = row.names(humanW))
+
+humanW_ <- mutate(humanW_, AfricanTF = row.names(humanW) %in% row.names(human_Africa))
+
+row.names(humanW_) = humanW_$Country
+
+humanW_ <- dplyr::select(humanW_, -Country)
+
+# convert AfricanTF to a factor
+humanW_$AfricanTF <- factor(humanW_$AfricanTF)
+
+```
+
+Plot matrix for world dataset
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(GGally)
+```
+
+```{r}
+#Matrix of plots for whole
+pW0 <- ggpairs(humanW, lower = list(combo = wrap("facethist", bins = 20)),title="Graphical overview of the humanW data")
+
+pW0
+```
+
+
+```{r}
+#Matrix of plots
+pW <- ggpairs(humanW_, mapping = aes(col = AfricanTF, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)),title="Graphical overview of the humanW_ data to show impact of African nations on data")
+
+pW
+```
+
+From the previous plot we can notice that African nations comprise about 23% of studied countries; nevertheless, they cause considerable heterogenity in data in almost all parameters except for the Percetange of female representatives in parliament which is surprisingly almost similar to other non-African countries.
+
+Clear difference can be captured in African nations regarding less female to male ratio with secondary education, less expected years of schooling, less life expectance at birth, less than average GNI which is less normally distributed and higher yet more normally distributed Maternal mortality rates and Adolesence birth rates.
+
+So, I have got the taste that in Africa the condition is *unique*.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(corrplot)
+```
+
+### Correlation matrix for African data
+
+```{r}
+#a more visual correlation matrix for African nations
+cor_matrix<-cor(human_Africa) %>% round(2)
+corrplot.mixed(cor_matrix,number.cex=0.65,tl.cex=0.6)
+```
+
+### What about other Non-African nations
+
+```{r}
+humanW_NonAf <- humanW[setdiff(row.names(humanW), Africa),]
+
+```
+
+
+```{r}
+#a more visual correlation matrix
+cor_matrix<-cor(humanW_NonAf) %>% round(2)
+corrplot.mixed(cor_matrix,number.cex=0.65,tl.cex=0.6)
+```
+
+***Now, It's clear that GNI is differently correlated to other variables in Africa compared with non-African nations***.
+
+## *Fitting regression model* 
+### for African countries 
+
+A multiple linear regression model with four explanatory variables (Edu2.FM, Labo.FM, Mat.Mor and Edu.Exp) selected based on the preliminary inspection of the dataset is fitted to investigate the relationship between them and the dependent outcome variable GNI.
+
+```{r}
+#First model with four explanatory variables in African
+mod<-lm(GNI~Edu2.FM+Labo.FM+Mat.Mor+Edu.Exp,data=human_Africa)
+summary(mod)
+```
+
+The summary report of the fitted model shows that Edu2.FM has a positive impact on GNI. Interestingly, the Labo.FM has considerable negative impact on GNI and Edu.Exp has a positive impact but less than Edu2.FM, estimates for Mat.Mor prove to be non-signicifant.
+
+Now, what if we exclude Mat.Mor from our model?
+
+```{r}
+# second model with three explanatory variables in African
+mod2<-lm(GNI~Edu2.FM+Labo.FM+Edu.Exp,data=human_Africa)
+summary(mod2)
+```
+
+in our final model the three explanatory variables are significantly affecting GNI with highest for Edu2FM.(positively) and Labo.FM(negatively), and lower with Edu.Exp(positively). Explanatory power of the final model has Adjusted R-squared of 0.701 a little bit better than the first one (0.695) indicating that the model predicts appoximately 70% of the variation in GNI.
+
+### What about non-African countries
+```{r}
+#First model with four explanatory variables in non-African
+mod_<-lm(GNI~Edu2.FM+Labo.FM+Mat.Mor+Edu.Exp,data=humanW_NonAf)
+summary(mod_)
+```
+
+It seems that it is only Edu.Exp is significantly related to GNI, although, it explains only 31% of variations based on this model.
+
+Now, let's exclude nonsignificant variables from the model
+
+```{r}
+# second model with one explanatory variables in non-African
+mod2_<-lm(GNI~Edu.Exp,data=humanW_NonAf)
+summary(mod2_)
+```
+
+almost the same explaining about 32% of the variation in GNI based on Edu.Exp. in non-African countries.
+
+## *Diagnostic plots*
+The model fit will be explored using diagnostic plots: Residals versus Fitted values, normal QQ-plot and residuals vs Leverage.
+
+### African countries model
+```{r}
+#Diagnostic plots for the final model mod2
+
+par(mfrow=c(2,2))
+plot(mod2,which=c(1,2,4,5))
+
+```
+
+### non-African countries model
+```{r}
+#Diagnostic plots for the final model mod2_
+
+par(mfrow=c(2,2))
+plot(mod2_,which=c(1,2,4,5))
+
+```
+
+## *Improving model with diagnostic plots*
+### African countries final model
+
+Based on previous diagnostic plot for African countries model, try to exclude "Botswana", "Mauritius", "Gabon", "Namibia", "South Africa"
+
+```{r}
+# third model with three explanatory variables in African-Botswana and Mauritius
+remove_these <- c("Botswana", "Mauritius", "Gabon", "Namibia", "South Africa")
+
+rows_to_remove <- which(row.names(human_Africa) %in% remove_these)
+
+human_Africaexc <- human_Africa[-rows_to_remove,]
+
+
+mod3<-lm(GNI~Edu2.FM+Labo.FM+Edu.Exp,data=human_Africaexc)
+summary(mod3)
+```
+
+Now it is Edu2.FM is less related to GNI
+
+```{r}
+
+mod4<-lm(GNI~Labo.FM+Edu.Exp,data=human_Africaexc)
+summary(mod4)
+```
 
 
 
+```{r}
+#Diagnostic plots for the final model mod4
+
+par(mfrow=c(2,2))
+plot(mod4,which=c(1,2,4,5))
+
+```
+
+The final model has the potential to explain about 86% of variation in GNI based on two explanatory variables of Labo.FM (with quite high significant negative correlation) and Edu.Exp (with a high significant positive correlation), we found that the model was enhanced after exclusion of extreme influential observations whereas it was not improved after trying to exckude Libya which proved to be less influential and its removal made thw fit worse; thus kept in.
+
+### non-African countries final model
+
+Again, for non-African countries, exclude Quatar, Kewait, Singapore.
+
+```{r}
+# model with one explanatory variables in non-African
+remove_these2 <- c("Qatar", "Kuwait", "Singapore")
+
+rows_to_remove2 <- which(row.names(humanW_NonAf) %in% remove_these2)
+
+human_nonAfricaexc <- humanW_NonAf[-rows_to_remove2,]
+
+# model with one explanatory variables in non-African
+mod3_<-lm(GNI~Edu.Exp,data=human_nonAfricaexc)
+summary(mod3_)
+
+```
+
+```{r}
+#Diagnostic plots for the final model mod4
+
+par(mfrow=c(2,2))
+plot(mod3_,which=c(1,2,4,5))
+
+```
+
+To improve our model we excluded extreme observations that influenced our model fit. According to our improved model for non-African countries; it seems that only *Expected years of schooling* is significantly correlated positively with *GNI*, with 49% of variation explained with Edu.Exp.
+
+## *Conclusion*
+
+The Edu.Exp (Expected years of schooling) is a significant positive predictor for GNI in both African and non-African countries, however, ratio of females/males in the labour force is very significantly correlated as a negative predictor of GNI *only in African countries*, this means that the higher ratio of females in labour force is mostly related to lower levels of GNI.
+
+My personal interpretation for such result could be that lower economic status is a strong drive for females' working in African countries and not in other non-African countries, or may be that females in African countries should be addressed with development programs to improve their impact on their countries' national income.
+
+******
+
+# Logistic Regression Analysis
+
+Here we will review our proposed model in **African countries** to test how is it possible to predict their GNI by the level of Females ratio to males in labour force.
+
+## *Hypothesis*
+
+The lower ratio of females to males in the labour force, the higher GNI in African countries.
+
+Initialy, we should make our variable of interest to be categorial for classifying and then change into numeric for further steps, let's see how:
+
+```{r}
+human_Africa$GNIcat<-cut(human_Africa$GNI, c(500,1000,5000,8000,10000,18000), right=FALSE, labels=c(1:5)) %>% as.numeric()
+
+human_Africacat <- dplyr::select(human_Africa, -GNI)
+
+human_Africacat_ <- mutate(human_Africacat, Country = row.names(human_Africacat))
+
+class(human_Africacat_$GNIcat)
+
+human_Africacat_ <- mutate(human_Africacat_, GNIcat2 = (human_Africacat_$GNIcat >= 3))
+
+# showing 11 countries with more than medium GNI (TRUE), and 24 countries with lower GNI (FALSE)
+summary(human_Africacat_)
+
+row.names(human_Africacat_) = human_Africacat_$Country
+
+human_Africacat_ <- dplyr::select(human_Africacat_, -Country)
+
+```
+
+## *Fitting the logistic regression model*
+
+After multiple rechecking (not shown) for potential influences of other variables, Labo.FM variable seemed to be most correlated as follows
+
+```{r}
+#logistic regression model with explanatory variable
+m1<-glm(GNIcat2~Labo.FM,data=human_Africacat_,family="binomial")
+summary(m1)
+
+```
+
+Actually, the summary of the model confirms our hypothesis that *Ratio of females to males in the labour force* is significant (0.0053) at the 5 % level, also we notice that the direction of correlation is towrd the negative side that is to say that Labo.FM is significantly negatively correlated with GNI.
+
+## *Odds, odds ratio and confidence intervals*
+
+An odds ratio (OR) is a measure of association between an exposure and an outcome. The OR represents the odds that an outcome will occur given a particular exposure, compared to the odds of the outcome occurring in the absence of that exposure. See [Explaining odds Ratios](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2938757/)
+
+When a logistic regression is calculated, the regression coefficient is the estimated increase in the log odds of the outcome per unit increase in the value of the exposure. In other words, the exponential function of the regression coefficient is the odds ratio associated with a one-unit increase in the exposure.
+
+```{r}
+# let's see our regression coefficient and its exponential as well as confidence intervals (CI)
+coef(m1)
+
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+OR <- coef(m1) %>% exp()
+
+CI <- confint(m1) %>% exp()
+
+```
 
 
+```{r}
+cbind(OR, CI)
+
+```
+
+As expected our confidence interval did not include one and is totally to the left in the negative correlation side.
+Based on previous summery we can expect very large increase (5 times) in odds of being a country with less than medium GNI for only minimal unit increase in ratio of females to males in the labour force in African nations. 
+
+## *Exploring the predictive power of our model*
+
+```{r}
+probabilities<-predict(m1,type="response")
+predictions<-probabilities >0.5
+# Add the probabilities
+human_Africacat_ <- mutate(human_Africacat_, probability = probabilities)
+# Calculate a logical value based on probabilites.
+human_Africacat_ <- mutate(human_Africacat_, prediction = probability > 0.5)
+table(high_GNI=human_Africacat_$GNIcat2,prediction=predictions) %>% addmargins %>% round(digits=2)
+
+```
+
+```{r}
+table(high_GNI=human_Africacat_$GNIcat2,prediction=predictions) %>% prop.table %>% addmargins %>% round(digits=2)
+
+```
+So, there were 21 true negatives, 5 true positives, 3 false positives and 6 false negatives, let's have some graphical illustration.
+
+```{r}
+g <- ggplot(human_Africacat_, aes(x = probability, y = GNIcat2, col = prediction)) 
+
+g + geom_point()
+```
+
+So, we can conclude that our model is performing better in predicting less than average GNI countries in Africa based on Lab.FM data than predicting higher GNI African countries, but, how much it is bad?
+let's compute the total proportion of inaccurately classified observations
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(class = human_Africacat_$GNIcat2, prob = human_Africacat_$probability)
+```
+
+Although we have 26% of inaccurate prediction, but we still have a ggod rationale for an educated guess which is for sure would be better than random prediction.
+
+## *Cross validation and optimization*
+
+Cross-validation tests the model on unseen data, performing cross-validation on our model.
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(class = human_Africacat_$GNIcat2, prob = human_Africacat_$probability)
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(boot)
+cv <- cv.glm(data = human_Africacat_, cost = loss_func, glmfit = m1, K = 10)
+```
+
+```{r}
+cv$delta[1]
+```
 
 
+Could we improve the model by including another variable? let's check
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+mbetter<-glm(GNIcat2~Labo.FM+Edu.Exp,family=binomial,data=human_Africacat_)
+
+cvbetter <- cv.glm(data = human_Africacat_, cost = loss_func, glmfit = mbetter, K = 10)
+```
+
+```{r}
+cvbetter$delta[1] 
+```
+
+## *Conclusion*
+
+the inclusion of the variable Edu.Exp dramatically improved the model and decreased the percentage of misclassified observations to 14%, I am not surprised as this goes in accordance with our initial linear regression results discussed earlier.
+
+***************
 
 
 
